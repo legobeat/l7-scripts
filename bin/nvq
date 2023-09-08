@@ -29,7 +29,7 @@ SECTION=dependencies
 TARGET=./package.json
 SORT=-z
 
-while getopts "h?DdPprt:" opt; do
+while getopts "h?DdP:pr:t:V" opt; do
   case "$opt" in
     h|\?)
       echo rtfs
