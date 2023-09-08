@@ -3,13 +3,15 @@
 # Example: nvs @myscope/mypackage
 #
 # Quickly show nodejs version requirements and peer dependences from $NPM_CONFIG_REGISTRY
+# -p filters output in last column to specific peerDependency.
+# Use -d and -D to show dependencies or devDependencies instead.
 
 set -e
 PKG=${!#}
 REGISTRY=${NPM_CONFIG_REGISTRY:-https://registry.npmjs.org}
 SECTION=peerDependencies
 
-while getopts "h?Ddr:" opt; do
+while getopts "h?Ddp:r:" opt; do
   case "$opt" in
     h|\?)
       echo rtfs
@@ -19,10 +21,18 @@ while getopts "h?Ddr:" opt; do
       ;;
     d)  SECTION=dependencies
       ;;
+    p)  PICK=$OPTARG
+      ;;
     r)  REGISTRY=$OPTARG
       ;;
   esac
 done
 
+if [[ -z "$PICK" ]]; then
+  JQ=".time as \$t | .versions|map([.version,\$t[.version], .engines.node,(.${SECTION}|tostring)]|@tsv)|join(\"\n\")"
+else
+  JQ=".time as \$t | .versions|map([.version,\$t[.version], .engines.node,(.${SECTION}[\"${PICK}\"]|tostring)]|@tsv)|join(\"\n\")"
+fi
+
 curl -s "${REGISTRY}/${PKG}" | \
-  jq ".time as \$t | .versions|map([.version,\$t[.version], .engines.node,(.${SECTION}|tostring)]|@tsv)|join(\"\n\")" -r
+  jq -r "${JQ}"
