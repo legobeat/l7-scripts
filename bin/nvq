@@ -1,5 +1,5 @@
 #!/bin/bash
-# nvq [$TARGET:./package.json]
+# nvq
 # Example: nvs @myscope/mypackage
 #
 # npm-versions-query
@@ -12,11 +12,11 @@
 set -e
 
 nvs_current_and_latest () {
-  REGISTRY=$1
+  SORT=$1
   PKG=$2
   CURRENT=$3
 
-  LATEST="$(nvs ${PKG} ${REGISTRY} | tail -n1 | cut -f1)"
+  LATEST="$(nvs ${PKG} | sort ${SORT} | tail -n2 | head -n+1 | cut -f1)"
   printf "%s\t%s\t%s\n" ${PKG} ${CURRENT} ${LATEST}
 }
 
@@ -24,31 +24,33 @@ nvs_current_and_latest () {
 export -f nvs_current_and_latest
 
 
-REGISTRY=${NPM_CONFIG_REGISTRY:-https://registry.npmjs.org}
-TARGET=./package.json
-
 CONCURRENCY=8
 SECTION=dependencies
+TARGET=./package.json
+SORT=-z
 
-while getopts "h?cdPprt:" opt; do
+while getopts "h?DdPprt:" opt; do
   case "$opt" in
     h|\?)
       echo rtfs
       exit 1
       ;;
-    d)  SECTION=devDependencies
-      ;;
-    p)  SECTION=peerDependencies
+    D)  SECTION=devDependencies
       ;;
     P)  CONCURRENCY=$OPTARG
       ;;
-    r)  REGISTRY=$OPTARG
+    p)  SECTION=peerDependencies
+      ;;
+    r)  NPM_CONFIG_REGISTRY=$OPTARG
       ;;
     t)  TARGET=$OPTARG
+      ;;
+    # Show latest by version, not by publish date like default
+    V)  SORT=-V
       ;;
   esac
 done
 
 jq -r ".${SECTION}|to_entries|map(.key,.value)|.[]" ${TARGET} \
-  | xargs -P${CONCURRENCY} -n2 bash -c "nvs_current_and_latest ${REGISTRY} \$0 \$1" \
+  | xargs -P${CONCURRENCY} -n2 bash -c "nvs_current_and_latest ${SORT} \$0 \$1" \
   | sort | column -t

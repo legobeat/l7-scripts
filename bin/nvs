@@ -1,11 +1,28 @@
-#!/bin/sh
-# nvs $PKG [$REGISTRY:https://registry.npmjs.org]
+#!/bin/bash
+# nvs $PKG
 # Example: nvs @myscope/mypackage
 #
-# Quickly show nodejs version requirements and peer dependences from NPM registry
+# Quickly show nodejs version requirements and peer dependences from $NPM_CONFIG_REGISTRY
 
 set -e
-PKG=$1
-REGISTRY=${2:-https://registry.npmjs.org}
+PKG=${!#}
+REGISTRY=${NPM_CONFIG_REGISTRY:-https://registry.npmjs.org}
+SECTION=peerDependencies
+
+while getopts "h?Ddr:" opt; do
+  case "$opt" in
+    h|\?)
+      echo rtfs
+      exit 1
+      ;;
+    D)  SECTION=devDependencies
+      ;;
+    d)  SECTION=dependencies
+      ;;
+    r)  REGISTRY=$OPTARG
+      ;;
+  esac
+done
+
 curl -s "${REGISTRY}/${PKG}" | \
-  jq '.time as $t | .versions|map([.version,$t[.version], .engines.node,(.peerDependencies|tostring)]|@tsv)|join("\n")' -r
+  jq ".time as \$t | .versions|map([.version,\$t[.version], .engines.node,(.${SECTION}|tostring)]|@tsv)|join(\"\n\")" -r
