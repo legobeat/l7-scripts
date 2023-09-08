@@ -1,0 +1,19 @@
+#!/bin/sh
+# yupa $TARGET $SRCDIR [$TARGETSUBDIR]
+# Example: yupa @myscope/mypackage@npm:1.0.0 ~/src/mypackage/dist dist
+#
+# yarn-user-patch-assistant
+# Create a yarn patch for the given $TARGET from $SRCDIR.
+# Optional $TARGETSUBDIR to limit patching to subdirectory.
+# Execute from package root
+
+set -e
+TARGET=$1
+SRCDIR=$2
+TARGETSUBDIR=${3:-}
+git diff --quiet yarn.lock package.json || (echo "Dirty manifest or lockfile, exiting." && exit 1)
+
+TARGETDIR="$(yarn patch $TARGET --json | jq .path -r)"
+cp -af $SRCDIR/* $TARGETDIR/$TARGETSUBDIR
+yarn patch-commit -s $TARGETDIR
+yarn install
