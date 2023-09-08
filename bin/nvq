@@ -16,7 +16,7 @@ nvs_current_and_latest () {
   PKG=$2
   CURRENT=$3
 
-  LATEST="$(nvs ${PKG} | sort ${SORT} | tail -n2 | head -n+1 | cut -f1)"
+  LATEST="$(nvs ${PKG} | sort ${SORT} | grep -v '^$' | tail -n1 | cut -f1)"
   printf "%s\t%s\t%s\n" ${PKG} ${CURRENT} ${LATEST}
 }
 
