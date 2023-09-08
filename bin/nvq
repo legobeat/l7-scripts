@@ -1,6 +1,6 @@
 #!/bin/bash
 # nvq
-# Example: nvs @myscope/mypackage
+# Example: nvq @myscope/mypackage
 #
 # npm-versions-query
 #
