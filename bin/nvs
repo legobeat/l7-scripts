@@ -1,0 +1,11 @@
+#!/bin/sh
+# nvs $PKG [$REGISTRY:https://registry.npmjs.org]
+# Example: nvs @myscope/mypackage
+#
+# Quickly show nodejs version requirements and peer dependences from NPM registry
+
+set -e
+PKG=$1
+REGISTRY=${2:-https://registry.npmjs.org}
+curl -s "${REGISTRY}/${PKG}" | \
+  jq '.time as $t | .versions|map([.version,$t[.version], .engines.node,(.peerDependencies|tostring)]|@tsv)|join("\n")' -r
