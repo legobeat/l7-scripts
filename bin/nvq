@@ -12,11 +12,12 @@
 set -e
 
 nvs_current_and_latest () {
+  set -e
   SORT=$1
   PKG=$2
   CURRENT=$3
 
-  LATEST="$(nvs ${PKG} | sort ${SORT} | grep -v '^$' | tail -n1 | cut -f1)"
+  LATEST="$(nvs ${PKG} | sort ${SORT} | grep -aEv '^[^\^0-9TZ.<>=-]*$' | tail -n1 | cut -f1)"
   printf "%s\t%s\t%s\n" ${PKG} ${CURRENT} ${LATEST}
 }
 
