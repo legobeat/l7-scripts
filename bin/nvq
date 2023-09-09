@@ -1,6 +1,7 @@
 #!/bin/bash
 # nvq
-# Example: nvq @myscope/mypackage
+# Example: nvq -n @myscope/mypackage
+#          nvq -f ./packages/mypackage/package.json
 #
 # npm-versions-query
 #
@@ -27,24 +28,26 @@ export -f nvs_current_and_latest
 
 CONCURRENCY=8
 SECTION=dependencies
-TARGET=./package.json
+TARGETFILE=./package.json
 SORT=-z
 
-while getopts "h?DdP:pr:t:V" opt; do
+while getopts "h?C:Df:n:P:pr:V" opt; do
   case "$opt" in
     h|\?)
       echo rtfs
       exit 1
       ;;
+    C)  CONCURRENCY=$OPTARG
+      ;;
     D)  SECTION=devDependencies
       ;;
-    P)  CONCURRENCY=$OPTARG
+    f)  TARGETFILE=$OPTARG
+      ;;
+    n)  TARGETNAME=$OPTARG
       ;;
     p)  SECTION=peerDependencies
       ;;
     r)  NPM_CONFIG_REGISTRY=$OPTARG
-      ;;
-    t)  TARGET=$OPTARG
       ;;
     # Show latest by version, not by publish date like default
     V)  SORT=-V
@@ -52,6 +55,14 @@ while getopts "h?DdP:pr:t:V" opt; do
   esac
 done
 
-jq -r ".${SECTION}|to_entries|map(.key,.value)|.[]" ${TARGET} \
+getdeps () {
+  if [[ -z "${TARGETNAME}" ]]; then
+    jq -r "if .${SECTION} then .${SECTION} else {} end" "${TARGETFILE}"
+  else
+    npm info "${TARGETNAME}" "${SECTION}" --json
+  fi
+}
+
+getdeps | jq 'to_entries|map(.key,.value)|.[]' \
   | xargs -P${CONCURRENCY} -n2 bash -c "nvs_current_and_latest ${SORT} \$0 \$1" \
   | sort | column -t
