@@ -29,10 +29,11 @@ while getopts "h?Ddp:r:" opt; do
 done
 
 if [[ -z "$PICK" ]]; then
-  JQ=".time as \$t | .versions|map([.version,\$t[.version], .engines.node,(.${SECTION}|tostring)]|@tsv)|join(\"\n\")"
+  JQF=".${SECTION}|tostring"
 else
-  JQ=".time as \$t | .versions|map([.version,\$t[.version], .engines.node,(.${SECTION}[\"${PICK}\"]|tostring)]|@tsv)|join(\"\n\")"
+  JQF=".${SECTION}[\"${PICK}\"]|tostring"
 fi
+JQ=".time as \$t | .versions|map([.version,\$t[.version], if .engines|type==\"object\" then .engines.node else .engines|@json end ,(${JQF})]|@tsv)|join(\"\n\")"
 
 curl -s "${REGISTRY}/${PKG}" | \
   jq -r "${JQ}"
