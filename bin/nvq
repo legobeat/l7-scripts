@@ -6,9 +6,6 @@
 # npm-versions-query
 #
 # Show current and latest version of dependencies from a package.json
-#
-# TODO: If $TARGET starts with `.`, it is assumed to be a path to a package manifest on the local filesystem and read from there.
-#   Otherwise, it will be looked up on the $NPM_CONFIG_REGISTRY
 
 set -e
 
